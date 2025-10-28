@@ -1,0 +1,17 @@
+<script type="text/html" data-template-name="muparser">
+  <div class="form-row">
+    <label for="node-input-expression"><i class="fa fa-superscript"></i> Expression</label>
+    <input type="text" id="node-input-expression" placeholder="sin(x) + y^2">
+  </div>
+  <div class="form-row">
+    <label><input type="checkbox" id="node-input-useMsg"> Use <code>msg.expression</code> to override</label>
+  </div>
+</script>
+
+<script type="text/html" data-help-name="muparser">
+  <p>High-performance math expression evaluator using <strong>muParser (C++)</strong>.</p>
+  <p><strong>Variables:</strong> Set via <code>msg.vars = { x: 1.5, y: 2 }</code></p>
+  <p><strong>Dynamic Expression:</strong> Send <code>msg.expression = "x*2"</code></p>
+  <p>Supports: <code>sin, cos, tan, log, pow, **, if(a,b,c)</code>, etc.</p>
+  <p>Speed: <strong>~15M evaluations/sec</strong> — ideal for real-time control.</p>
+</script>

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "test-flow",
+    "type": "tab",
+    "label": "muParser Test"
+  },
+  {
+    "id": "inject1",
+    "type": "inject",
+    "z": "test-flow",
+    "name": "Test 1",
+    "props": [{ "p": "vars.x", "v": "3", "vt": "num" }, { "p": "vars.y", "v": "4", "vt": "num" }],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "x": 100,
+    "y": 100,
+    "wires": [["muparser1"]]
+  },
+  {
+    "id": "muparser1",
+    "type": "muparser",
+    "z": "test-flow",
+    "name": "Distance",
+    "expression": "sqrt(x^2 + y^2)",
+    "useMsg": false,
+    "x": 300,
+    "y": 100,
+    "wires": [["debug1"]]
+  },
+  {
+    "id": "debug1",
+    "type": "debug",
+    "z": "test-flow",
+    "name": "",
+    "active": true,
+    "x": 500,
+    "y": 100,
+    "wires": []
+  }
+]
