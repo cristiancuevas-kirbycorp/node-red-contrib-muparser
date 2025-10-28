@@ -15,9 +15,18 @@
 - Variables via `msg.vars`
 
 ---
+## Build and Install
+
+```bash
+## Build
+
+cd C:\S2L_Dev\node-red-contrib\node-red-contrib-muparser
+npm run clean
+npm run build
+
 
 ## Install
 
-```bash
 cd ~/.node-red
 npm install node-red-contrib-muparser
+
