@@ -2,9 +2,24 @@
   "targets": [
     {
       "target_name": "muparser_node",
-      "sources": [ "src/muparser_node.cpp" ],
+      "sources": [
+        "src/muparser_node.cpp",
+        "muparser/src/muParser.cpp",
+        "muparser/src/muParserBase.cpp",
+        "muparser/src/muParserBytecode.cpp",
+        "muparser/src/muParserCallback.cpp",
+        "muparser/src/muParserDLL.cpp",
+        "muparser/src/muParserError.cpp",
+        "muparser/src/muParserInt.cpp",
+        "muparser/src/muParserTest.cpp",
+        "muparser/src/muParserTokenReader.cpp"
+      ],
       "include_dirs": [
-        "muparser/include"
+        "muparser/include",
+        "node_modules/node-addon-api"
+      ],
+      "defines": [
+        "MUPARSER_STATIC"
       ],
       "cflags!": [ "-fno-exceptions" ],
       "cflags_cc!": [ "-fno-exceptions" ],
@@ -12,11 +27,6 @@
         [ "OS=='win'", {
           "msvs_settings": {
             "VCCLCompilerTool": { "ExceptionHandling": 1 }
-          }
-        }],
-        [ "OS=='mac'", {
-          "xcode_settings": {
-            "GCC_ENABLE_CPP_EXCEPTIONS": "YES"
           }
         }]
       ]

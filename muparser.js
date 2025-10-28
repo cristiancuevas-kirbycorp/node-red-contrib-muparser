@@ -1,44 +1,33 @@
 module.exports = function(RED) {
+    "use strict";
     const path = require('path');
+    const addonPath = path.join(__dirname, 'build', 'Release', 'muparser_node.node');
     let MuParser;
+
     try {
-        MuParser = require('./build/Release/muparser_node').MuParser;
+        MuParser = require(addonPath).MuParser;
     } catch (err) {
-        RED.log.error("muParser native module failed to load: " + err.message);
-        RED.log.info("Run 'npm run build' in the node-red-contrib-muparser directory");
+        RED.log.error("Failed to load muparser_node.node: " + err.message);
         return;
     }
 
     function MuParserNode(config) {
         RED.nodes.createNode(this, config);
         const node = this;
-        let parser = new MuParser();
-
-        if (config.expression) {
-            try {
-                parser.setExpression(config.expression);
-            } catch (e) {
-                node.error("Invalid expression: " + e.message);
-            }
-        }
 
         node.on('input', function(msg) {
             try {
-                // Allow dynamic expression
-                if (config.useMsg && msg.expression) {
-                    parser.setExpression(msg.expression);
-                }
+                const p = new MuParser();
+                p.setExpression(config.expression || msg.expression || "0");
 
-                // Set variables
-                if (msg.vars && typeof msg.vars === 'object') {
-                    for (const [key, val] of Object.entries(msg.vars)) {
-                        if (typeof val === 'number') {
-                            parser.setVar(key, val);
-                        }
-                    }
-                }
+                // Extract variables from msg.vars or config.vars
+                const vars = config.vars || msg.vars || {};
+                Object.keys(vars).forEach(name => {
+                    const val = RED.util.evaluateNodeProperty(vars[name], 'msg', this, msg);
+                    p.setVar(name, val);
+                });
 
-                msg.payload = parser.eval();
+                msg.payload = p.eval();
                 node.send(msg);
             } catch (err) {
                 node.error("muParser error: " + err.message, msg);
