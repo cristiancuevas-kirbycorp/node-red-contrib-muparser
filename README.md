@@ -19,7 +19,7 @@
 
 ```bash
 ## Build
-
+git clone https://github.com/beltoforion/muparser.git muparser
 cd C:\S2L_Dev\node-red-contrib\node-red-contrib-muparser
 npm run clean
 npm run build

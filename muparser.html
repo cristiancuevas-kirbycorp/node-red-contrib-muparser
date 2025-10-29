@@ -1,5 +1,12 @@
 <script type="text/html" data-template-name="muparser">
     <div class="form-row">
+        <label>
+            <input type="checkbox" id="node-input-useExpressionFrom" style="width:auto; vertical-align:middle;">
+            <span>Use expression from:</span>
+        </label>
+        <input type="text" id="node-input-expressionPath" placeholder="e.g. msg.payload.expression" style="width:60%; margin-left:10px;" disabled>
+    </div>
+    <div class="form-row">
         <label for="node-input-expression"><i class="fa fa-calculator"></i> Expression</label>
         <input type="text" id="node-input-expression" placeholder="x + y * sin(z)">
     </div>
@@ -82,7 +89,9 @@ Expression: x * cos(theta), x * sin(theta)
         defaults: {
             name: { value: "" },
             expression: { value: "x + y", required: true },
-            vars: { value: {} }
+            vars: { value: {} },
+            useExpressionFrom: { value: false },
+            expressionPath: { value: "" }
         },
         inputs: 1,
         outputs: 1,
@@ -102,6 +111,22 @@ Expression: x * cos(theta), x * sin(theta)
 
             Object.keys(vars).forEach(k => addRow(k, vars[k]));
             $("#node-input-add-var").click(() => addRow("", "payload"));
+
+            // Set initial state
+            $("#node-input-expressionPath").prop("disabled", !$("#node-input-useExpressionFrom").is(":checked"));
+
+            // Toggle fields on checkbox change
+            $("#node-input-useExpressionFrom").on("change", function () {
+                if ($(this).is(":checked")) {
+                    $("#node-input-expression").prop("disabled", true);
+                    $("#node-input-expressionPath").prop("disabled", false);
+                } else {
+                    $("#node-input-expression").prop("disabled", false);
+                    $("#node-input-expressionPath").prop("disabled", true);
+                }
+            });
+
+
         },
         oneditsave: function() {
             const vars = {};
@@ -111,6 +136,9 @@ Expression: x * cos(theta), x * sin(theta)
                 if (name) vars[name] = value;
             });
             this.vars = vars;
+            this.useExpressionFrom = $("#node-input-useExpressionFrom").is(":checked");
+            this.expressionPath = $("#node-input-expressionPath").val();
+
         }
     });
 </script>
