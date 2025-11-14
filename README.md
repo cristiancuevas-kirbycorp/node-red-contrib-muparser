@@ -6,13 +6,40 @@
 
 ---
 
+
 ## Features
 
-- **C++ speed**: ~15M evaluations/sec
-- Supports: `sin`, `cos`, `log`, `pow`, `**`, `if()`, variables
-- Node-RED UI with expression input
-- Dynamic expressions via `msg.expression`
-- Variables via `msg.vars`
+- **Blazing-fast C++ engine**: 15M–18M+ evaluations/sec on modern CPUs
+- **Node-RED UI**: Intuitive node for entering math expressions and mapping variables
+- **Dynamic expressions**: Use a static expression or set it dynamically from any property (e.g., `msg.payload.expression`)
+- **Flexible variable mapping**: Map variables to any property in the incoming message (e.g., `payload.x`, `msg.temp`)
+- **Variables via `msg.vars` or node config**: Pass variables as an object in `msg.vars` or configure in the node
+- **Rich function/operator support**: All muParser built-ins, including:
+    - Arithmetic: `+`, `-`, `*`, `/`, `^`, `**`, parentheses
+    - Trigonometric: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`
+    - Logarithmic: `ln`, `log10`, `log2`, `exp`
+    - Rounding: `floor`, `ceil`, `round`, `abs`, `sign`
+    - Min/Max: `min(a,b)`, `max(a,b)`
+    - Conditional: `if(cond, true, false)`
+    - Constants: `pi`, `e`
+- **Multiple outputs**: Return arrays by using comma-separated expressions (e.g., `x*cos(theta), x*sin(theta)`)
+- **No JavaScript eval()**: Safe, native, and fast
+- **Error handling**: Errors are reported in the Node-RED debug tab
+- **Cross-platform**: Windows, Linux, macOS (untested)
+
+---
+
+### Example Usage
+
+**Expression:** `sqrt(x^2 + y^2) + sin(z)`  
+**Variables:**
+    - `x` → `payload.x`
+    - `y` → `payload.y`
+    - `z` → `payload.angle`
+**Input:** `{ "x": 3, "y": 4, "angle": 1.57 }`
+**Output:** `5.999...` (≈ 6)
+
+---
 
 ---
 ## Build and Install
