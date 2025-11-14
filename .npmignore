@@ -1,0 +1,35 @@
+.vs/
+
+# Exclude build artifacts that are not needed for distribution
+build/Release/obj/
+build/Release/*.iobj
+build/Release/*.ipdb
+build/Release/*.pdb
+build/Release/*.exp
+build/Release/*.lib
+build/*.sln
+build/*.vcxproj
+build/*.vcxproj.filters
+
+# Exclude development files
+.vscode/
+.github/
+test/
+muparser/test/
+muparser/samples/
+muparser/docs/
+muparser/.github/
+muparser/.vscode/
+muparser/.gitattributes
+muparser/appveyor.yml
+
+# Exclude old tarballs
+*.tgz
+
+# Keep only essentials:
+# - binding.gyp (needed for rebuild)
+# - muparser/src/ and muparser/include/ (source files)
+# - src/ (our binding source)
+# - muparser.js, muparser.html (node files)
+# - icons/ (for Node-RED UI)
+# - package.json, README.md, LICENSE

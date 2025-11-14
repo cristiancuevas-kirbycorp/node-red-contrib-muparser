@@ -2,14 +2,18 @@
   "name": "node-red-contrib-muparser",
   "version": "1.0.3",
   "description": "Fast math parser using muParser (C++)",
+  "main": "muparser.js",
+  "gypfile": true,
   "node-red": {
     "nodes": {
       "muparser": "muparser.js"
     }
   },
   "scripts": {
+    "install": "npm install --ignore-scripts && node-gyp rebuild",
     "build": "node-gyp rebuild",
-    "clean": "node-gyp clean"
+    "clean": "node-gyp clean",
+    "test": "echo \"No tests specified\" && exit 0"
   },
   "dependencies": {
     "node-addon-api": "^7.1.0"
@@ -17,12 +21,33 @@
   "devDependencies": {
     "node-gyp": "^10.3.1"
   },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "os": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
   "keywords": [
     "node-red",
     "muparser",
     "math",
-    "expression"
+    "expression",
+    "parser",
+    "calculator",
+    "native",
+    "addon",
+    "fast"
   ],
   "author": "You",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cristiancuevas-kirbycorp/node-red-contrib-muparser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cristiancuevas-kirbycorp/node-red-contrib-muparser/issues"
+  },
+  "homepage": "https://github.com/cristiancuevas-kirbycorp/node-red-contrib-muparser#readme"
 }
