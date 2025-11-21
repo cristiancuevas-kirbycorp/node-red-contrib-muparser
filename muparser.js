@@ -3,10 +3,6 @@ const path = require('path');
 const addonPath = path.join(__dirname, 'build', 'Release', 'muparser_node.node');
 let MuParser;
 
-function getByPath(obj, path) {
-    return path.split('.').reduce((o, p) => (o ? o[p] : undefined), obj);
-}
-
 module.exports = function (RED) {
     try {
         MuParser = require(addonPath).MuParser;
@@ -22,15 +18,16 @@ module.exports = function (RED) {
         node.on('input', function (msg) {
             try {
                 let expression;
+                // Handle expression: dynamic or static
                 if (config.useExpressionFrom) {
-                    if (!config.expressionPath) {
-                        throw new Error("Expression path is not defined in node configuration.");
-                    }
-                    // Remove leading "msg." if present
-                    const path = config.expressionPath.replace(/^msg\./, "");
-                    expression = getByPath(msg, path);
+                    expression = RED.util.evaluateNodeProperty(
+                        config.expressionPath, 
+                        config.expressionPathType || 'msg', 
+                        node, 
+                        msg
+                    );
                     if (expression === undefined || expression === null || expression === "") {
-                        throw new Error("Expression not found or empty at path: " + config.expressionPath);
+                        throw new Error("Expression not found or empty at: " + config.expressionPath);
                     }
                 } else {
                     expression = config.expression || "0";
@@ -39,12 +36,62 @@ module.exports = function (RED) {
                 const p = new MuParser();
                 p.setExpression(expression);
 
-                // Extract variables from msg.vars or config.vars
-                const vars = config.vars || msg.vars || {};
-                Object.keys(vars).forEach(name => {
-                    const val = RED.util.evaluateNodeProperty(vars[name], 'msg', this, msg);
-                    p.setVar(name, val);
-                });
+                // Handle variables: three modes with priority order
+                if (config.useVarsFrom) {
+                    // Mode 1: Dynamic - Get variables from object at specified path
+                    const variableSource = RED.util.evaluateNodeProperty(
+                        config.varsPath,
+                        config.varsPathType || 'msg',
+                        node,
+                        msg
+                    );
+                    if (!variableSource || typeof variableSource !== 'object') {
+                        throw new Error("Variables not found or not an object at: " + config.varsPath);
+                    }
+                    // Set variables directly from the object
+                    Object.keys(variableSource).forEach(name => {
+                        const val = Number(variableSource[name]);
+                        if (isNaN(val)) {
+                            throw new Error(`Variable '${name}' has non-numeric value: ${variableSource[name]}`);
+                        }
+                        p.setVar(name, val);
+                    });
+                } else {
+                    // Mode 2: Static - Use config.vars mapping (if defined)
+                    // Mode 3: Fallback - Use msg.vars if no static vars configured
+                    const varsMapping = (config.vars && config.vars.length > 0) ? config.vars : null;
+                    
+                    if (varsMapping) {
+                        // Static mapping: each variable maps to a message property with type
+                        varsMapping.forEach(varDef => {
+                            const name = varDef.name;
+                            const val = RED.util.evaluateNodeProperty(
+                                varDef.value,
+                                varDef.valueType || 'msg',
+                                node,
+                                msg
+                            );
+                            if (val === undefined || val === null) {
+                                throw new Error(`Variable '${name}' not found at: ${varDef.value}`);
+                            }
+                            const numVal = Number(val);
+                            if (isNaN(numVal)) {
+                                throw new Error(`Variable '${name}' has non-numeric value: ${val}`);
+                            }
+                            p.setVar(name, numVal);
+                        });
+                    } else if (msg.vars && typeof msg.vars === 'object') {
+                        // Fallback: use msg.vars object
+                        Object.keys(msg.vars).forEach(name => {
+                            const val = Number(msg.vars[name]);
+                            if (isNaN(val)) {
+                                throw new Error(`Variable '${name}' in msg.vars has non-numeric value: ${msg.vars[name]}`);
+                            }
+                            p.setVar(name, val);
+                        });
+                    }
+                    // If neither static vars nor msg.vars exist, proceed with no variables
+                }
 
                 msg.payload = p.eval();
                 node.send(msg);

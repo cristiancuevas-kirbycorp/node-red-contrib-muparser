@@ -1,22 +1,46 @@
 <script type="text/html" data-template-name="muparser">
     <div class="form-row">
-        <label>
-            <input type="checkbox" id="node-input-useExpressionFrom" style="width:auto; vertical-align:middle;">
-            <span>Use expression from:</span>
-        </label>
-        <input type="text" id="node-input-expressionPath" placeholder="e.g. msg.payload.expression" style="width:60%; margin-left:10px;" disabled>
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="muParser">
+    </div>
+    
+    <!-- Expression Section -->
+    <div class="form-row" style="margin-top: 20px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
+        <label style="font-weight: bold; width: 100%;"><i class="fa fa-calculator"></i> Expression</label>
     </div>
     <div class="form-row">
-        <label for="node-input-expression"><i class="fa fa-calculator"></i> Expression</label>
-        <input type="text" id="node-input-expression" placeholder="x + y * sin(z)">
+        <input type="radio" name="expression-mode" id="node-input-useStaticExpression" value="static" style="width:auto; margin-right: 5px;" checked>
+        <label for="node-input-useStaticExpression" style="width: auto; margin-right: 10px;">Static</label>
+        <input type="text" id="node-input-expression" placeholder="e.g., sqrt(x^2 + y^2)" style="width:70%;">
     </div>
     <div class="form-row">
-        <label><i class="fa fa-list"></i> Variables</label>
-        <table style="width:100%">
-            <tr><th>Name</th><th>Value (msg property)</th><th></th></tr>
-            <tbody id="node-input-vars"></tbody>
-        </table>
-        <button class="editor-button" id="node-input-add-var">Add Variable</button>
+        <input type="radio" name="expression-mode" id="node-input-useDynamicExpression" value="dynamic" style="width:auto; margin-right: 5px;">
+        <label for="node-input-useDynamicExpression" style="width: auto; margin-right: 10px;">Dynamic</label>
+        <input type="hidden" id="node-input-expressionPath">
+        <input type="hidden" id="node-input-expressionPathType">
+        <div id="node-input-expressionPath-container" style="display: inline-block; width: 70%;"></div>
+    </div>
+    
+    <!-- Variables Section -->
+    <div class="form-row" style="margin-top: 20px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
+        <label style="font-weight: bold; width: 100%;"><i class="fa fa-list"></i> Variables</label>
+    </div>
+    <div class="form-row">
+        <input type="radio" name="vars-mode" id="node-input-useStaticVars" value="static" style="width:auto; margin-right: 5px;" checked>
+        <label for="node-input-useStaticVars" style="width: auto;">Define manually</label>
+    </div>
+    <div id="static-vars-section" class="form-row">
+        <div id="node-input-vars-container"></div>
+    </div>
+    <div class="form-row">
+        <input type="radio" name="vars-mode" id="node-input-useDynamicVars" value="dynamic" style="width:auto; margin-right: 5px;">
+        <label for="node-input-useDynamicVars" style="width: auto; margin-right: 10px;">From object</label>
+        <input type="hidden" id="node-input-varsPath">
+        <input type="hidden" id="node-input-varsPathType">
+        <div id="node-input-varsPath-container" style="display: inline-block; width: 70%;"></div>
+    </div>
+    <div class="form-row" style="margin-left: 25px;">
+        <span style="font-size: 0.85em; color: #999; font-style: italic;">💡 Tip: Use <code>msg.vars</code> to pass variables as an object</span>
     </div>
 </script>
 
@@ -26,21 +50,52 @@
     <p>Performs <strong>18+ million evaluations per second</strong> — ideal for real-time signal processing, control systems, or high-frequency data.</p>
 
     <h4>How to Use</h4>
-    <ol>
-        <li><strong>Enter Expression</strong>: Use variables like <code>x</code>, <code>y</code>, <code>temp</code></li>
-        <li><strong>Map Variables</strong>: Link to <code>msg.payload.value</code>, <code>msg.x</code>, etc.</li>
-        <li><strong>Deploy</strong> → <code>msg.payload</code> = result</li>
-    </ol>
+    
+    <h5>1. Expression</h5>
+    <ul>
+        <li><strong>Static</strong>: Enter expression directly (e.g., <code>sqrt(x^2 + y^2)</code>)</li>
+        <li><strong>From message</strong>: Point to a property containing the expression (e.g., <code>payload.expression</code>)</li>
+    </ul>
+    
+    <h5>2. Variables</h5>
+    <ul>
+        <li><strong>Define manually</strong>: Map each variable to a message property
+            <ul><li>Example: <code>x</code> → <code>payload.x</code>, <code>y</code> → <code>payload.y</code></li></ul>
+        </li>
+        <li><strong>From object</strong>: Point to an object containing all variables
+            <ul><li>Example: Set to <code>payload.vars</code> if <code>msg.payload.vars = {x:3, y:4}</code></li></ul>
+        </li>
+        <li><strong>Using msg.vars</strong>: Send variables in <code>msg.vars</code> (auto-detected)</li>
+    </ul>
 
-    <h4>Example</h4>
+    <h4>Example 1: Manual Variables</h4>
     <pre>
 Expression: sqrt(x^2 + y^2) + sin(z)
 Variables:
   x → payload.x
   y → payload.y
   z → payload.angle
-Input:  { "x": 3, "y": 4, "angle": 1.57 }
-Output: 5.999... (≈ 6)
+  
+Input:  { "payload": { "x": 3, "y": 4, "angle": 1.57 } }
+Output: msg.payload = 5.999... (≈ 6)
+    </pre>
+    
+    <h4>Example 2: Variables from Object</h4>
+    <pre>
+Expression: temp * 1.8 + 32
+Variables from: payload.sensor
+
+Input:  { "payload": { "sensor": { "temp": 25 } } }
+Output: msg.payload = 77 (Celsius to Fahrenheit)
+    </pre>
+    
+    <h4>Example 3: Using msg.vars</h4>
+    <pre>
+Expression: a + b * c
+Variables: (none configured - uses msg.vars)
+
+Input:  { "vars": { "a": 10, "b": 5, "c": 2 } }
+Output: msg.payload = 20
     </pre>
 
     <h4>Supported Operators & Functions</h4>
@@ -89,9 +144,13 @@ Expression: x * cos(theta), x * sin(theta)
         defaults: {
             name: { value: "" },
             expression: { value: "x + y", required: true },
-            vars: { value: {} },
+            vars: { value: [] },
             useExpressionFrom: { value: false },
-            expressionPath: { value: "" }
+            expressionPath: { value: "" },
+            expressionPathType: { value: "msg" },
+            useVarsFrom: { value: false },
+            varsPath: { value: "" },
+            varsPathType: { value: "msg" }
         },
         inputs: 1,
         outputs: 1,
@@ -99,46 +158,178 @@ Expression: x * cos(theta), x * sin(theta)
         paletteLabel: "muParser",
         label: function() { return this.name || "muParser"; },
         oneditprepare: function() {
-            const table = $("#node-input-vars");
-            const vars = this.vars || {};
+            // Initialize TypedInput for expression path
+            $("#node-input-expressionPath-container").typedInput({
+                type: this.expressionPathType || "msg",
+                types: ["msg", "flow", "global"],
+                typeField: "#node-input-expressionPathType"
+            });
+            $("#node-input-expressionPath-container").typedInput('value', this.expressionPath || 'payload.expression');
 
-            function addRow(name, value) {
-                const row = $("<tr/>").appendTo(table);
-                $("<td/>").append($("<input type='text' style='width:80px'>").val(name)).appendTo(row);
-                $("<td/>").append($("<input type='text' style='width:150px'>").val(value)).appendTo(row);
-                $("<td/>").append($("<button>X</button>").click(() => row.remove())).appendTo(row);
+            // Initialize TypedInput for vars path
+            $("#node-input-varsPath-container").typedInput({
+                type: this.varsPathType || "msg",
+                types: ["msg", "flow", "global"],
+                typeField: "#node-input-varsPathType"
+            });
+            $("#node-input-varsPath-container").typedInput('value', this.varsPath || 'payload.vars');
+
+            // Initialize editableList for variables
+            $("#node-input-vars-container").css({
+                'min-height': '280px',
+                'height': '280px'
+            }).editableList({
+                addItem: function(container, i, opt) {
+                    const row = opt || {};
+                    const html = $('<div/>').css({
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '4px 0',
+                        'max-width': '100%'
+                    });
+
+                    // Variable name input
+                    $('<input/>',{
+                        class: "node-input-var-name",
+                        type: "text",
+                        placeholder: "var"
+                    })
+                    .css({
+                        'width': '90px',
+                        'flex-shrink': '0'
+                    })
+                    .val(row.name || '')
+                    .appendTo(html);
+
+                    $('<span/>').text('→').css({
+                        'margin': '0',
+                        'padding': '0 3px',
+                        'color': '#999',
+                        'flex-shrink': '0'
+                    }).appendTo(html);
+
+                    // Create container for TypedInput
+                    const valueContainer = $('<div/>').css({
+                        'flex': '1 1 auto',
+                        'min-width': '0'
+                    }).appendTo(html);
+                    
+                    // Create input element for TypedInput
+                    const valueInput = $('<input/>',{
+                        class: "node-input-var-value",
+                        type: "text"
+                    }).css({
+                        'width': '100%'
+                    }).appendTo(valueContainer);
+                    
+                    // Hidden input for type
+                    $('<input/>',{
+                        class: "node-input-var-valueType",
+                        type: "hidden"
+                    }).val(row.valueType || 'msg').appendTo(valueContainer);
+
+                    // Initialize TypedInput for this row
+                    valueInput.typedInput({
+                        type: row.valueType || "msg",
+                        types: ["msg", "flow", "global", "num", "jsonata"]
+                    });
+                    valueInput.typedInput('value', row.value || 'payload');
+
+                    html.appendTo(container);
+                },
+                removable: true,
+                sortable: true
+            });
+
+            // Convert old format (object) to new format (array) if needed
+            let varsList = this.vars;
+            if (!Array.isArray(varsList)) {
+                // Old format: {x: "payload.x", y: "payload.y"}
+                varsList = Object.keys(varsList || {}).map(name => ({
+                    name: name,
+                    value: varsList[name],
+                    valueType: "msg"
+                }));
             }
 
-            Object.keys(vars).forEach(k => addRow(k, vars[k]));
-            $("#node-input-add-var").click(() => addRow("", "payload"));
+            // Add existing variables to the list
+            varsList.forEach(v => {
+                $("#node-input-vars-container").editableList('addItem', v);
+            });
 
-            // Set initial state
-            $("#node-input-expressionPath").prop("disabled", !$("#node-input-useExpressionFrom").is(":checked"));
+            // Set initial state for expression mode
+            if (this.useExpressionFrom) {
+                $("#node-input-useDynamicExpression").prop("checked", true);
+                $("#node-input-expression").prop("disabled", true);
+                $("#node-input-expressionPath-container").typedInput('enable');
+            } else {
+                $("#node-input-useStaticExpression").prop("checked", true);
+                $("#node-input-expression").prop("disabled", false);
+                $("#node-input-expressionPath-container").typedInput('disable');
+            }
 
-            // Toggle fields on checkbox change
-            $("#node-input-useExpressionFrom").on("change", function () {
-                if ($(this).is(":checked")) {
-                    $("#node-input-expression").prop("disabled", true);
-                    $("#node-input-expressionPath").prop("disabled", false);
-                } else {
+            // Set initial state for vars mode
+            if (this.useVarsFrom) {
+                $("#node-input-useDynamicVars").prop("checked", true);
+                $("#static-vars-section").hide();
+                $("#node-input-varsPath-container").typedInput('enable');
+            } else {
+                $("#node-input-useStaticVars").prop("checked", true);
+                $("#static-vars-section").show();
+                $("#node-input-varsPath-container").typedInput('disable');
+            }
+
+            // Handle expression mode changes
+            $("input[name='expression-mode']").on("change", function () {
+                if ($("#node-input-useStaticExpression").is(":checked")) {
                     $("#node-input-expression").prop("disabled", false);
-                    $("#node-input-expressionPath").prop("disabled", true);
+                    $("#node-input-expressionPath-container").typedInput('disable');
+                } else {
+                    $("#node-input-expression").prop("disabled", true);
+                    $("#node-input-expressionPath-container").typedInput('enable');
                 }
             });
 
-
+            // Handle vars mode changes
+            $("input[name='vars-mode']").on("change", function () {
+                if ($("#node-input-useStaticVars").is(":checked")) {
+                    $("#static-vars-section").show();
+                    $("#node-input-varsPath-container").typedInput('disable');
+                } else {
+                    $("#static-vars-section").hide();
+                    $("#node-input-varsPath-container").typedInput('enable');
+                }
+            });
         },
         oneditsave: function() {
-            const vars = {};
-            $("#node-input-vars tr").each(function() {
-                const name = $(this).find("input").eq(0).val().trim();
-                const value = $(this).find("input").eq(1).val().trim();
-                if (name) vars[name] = value;
+            // Save expression settings
+            this.useExpressionFrom = $("#node-input-useDynamicExpression").is(":checked");
+            this.expressionPath = $("#node-input-expressionPath-container").typedInput('value');
+            this.expressionPathType = $("#node-input-expressionPath-container").typedInput('type');
+
+            // Save vars settings
+            this.useVarsFrom = $("#node-input-useDynamicVars").is(":checked");
+            this.varsPath = $("#node-input-varsPath-container").typedInput('value');
+            this.varsPathType = $("#node-input-varsPath-container").typedInput('type');
+
+            // Save variable list
+            const vars = [];
+            const items = $("#node-input-vars-container").editableList('items');
+            items.each(function() {
+                const name = $(this).find(".node-input-var-name").val().trim();
+                const valueInput = $(this).find(".node-input-var-value");
+                if (name && valueInput.length) {
+                    const value = valueInput.typedInput('value');
+                    const valueType = valueInput.typedInput('type');
+                    vars.push({
+                        name: name,
+                        value: value,
+                        valueType: valueType
+                    });
+                }
             });
             this.vars = vars;
-            this.useExpressionFrom = $("#node-input-useExpressionFrom").is(":checked");
-            this.expressionPath = $("#node-input-expressionPath").val();
-
         }
     });
 </script>
