@@ -136,10 +136,13 @@ The node displays real-time status:
     - **Windows**: Visual Studio Build Tools
     - **Linux**: `build-essential` (GCC, g++, make)
 
-### Quick Install (From npm - Coming Soon)
+### Quick Install (From npm)
 ```bash
 cd ~/.node-red
 npm install node-red-contrib-muparser
+
+# After installation, the native addon will build automatically
+# Restart Node-RED after the build completes
 ```
 
 ### Build from Source
@@ -174,6 +177,16 @@ npm install /path/to/node-red-contrib-muparser-X.X.X.tgz
 
 ---
 ## Troubleshooting
+
+### Node-RED crashes or restarts repeatedly
+This happens when the native addon hasn't been built yet. The node will show a red status "Addon not loaded - rebuild required".
+
+**Solution:**
+```bash
+cd ~/.node-red/node_modules/node-red-contrib-muparser
+npm run build
+# Then restart Node-RED
+```
 
 ### Linux: Missing build tools
 ```bash

@@ -1,15 +1,7 @@
 .vs/
 
-# Exclude build artifacts that are not needed for distribution
-build/Release/obj/
-build/Release/*.iobj
-build/Release/*.ipdb
-build/Release/*.pdb
-build/Release/*.exp
-build/Release/*.lib
-build/*.sln
-build/*.vcxproj
-build/*.vcxproj.filters
+# Exclude ALL build artifacts - force rebuild on target platform
+build/
 
 # Exclude development files
 .vscode/

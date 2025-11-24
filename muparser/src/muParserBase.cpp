@@ -59,7 +59,9 @@ using namespace std;
 
 namespace mu
 {
-	std::locale ParserBase::s_locale = std::locale(std::locale::classic(), new change_dec_sep<char_type>('.'));
+	// PATCH for NAPI: Avoid static initialization issues by using simple locale
+	// The custom decimal separator facet causes segfaults in shared library context on Linux
+	std::locale ParserBase::s_locale = std::locale("C");
 
 	bool ParserBase::g_DbgDumpCmdCode = false;
 	bool ParserBase::g_DbgDumpStack = false;

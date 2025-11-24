@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-muparser",
-  "version": "1.1.0",
+  "version": "1.2.6",
   "description": "Blazing-fast mathematical expression evaluator for Node-RED. Native C++ addon using muParser library - 18M+ evaluations/sec. Features: batch processing, custom output locations, dual outputs for error handling, flexible variable sources, and comprehensive function library.",
   "main": "muparser.js",
   "gypfile": true,
@@ -10,7 +10,7 @@
     }
   },
   "scripts": {
-    "install": "npm install --ignore-scripts && node-gyp rebuild",
+    "install": "node-gyp rebuild || echo 'Build failed - you may need to run: npm run build'",
     "build": "node-gyp rebuild",
     "clean": "node-gyp clean",
     "test": "echo \"No tests specified\" && exit 0"
@@ -58,7 +58,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cristiancuevas-kirbycorp/node-red-contrib-muparser.git"
+    "url": "git+https://github.com/cristiancuevas-kirbycorp/node-red-contrib-muparser.git"
   },
   "bugs": {
     "url": "https://github.com/cristiancuevas-kirbycorp/node-red-contrib-muparser/issues"

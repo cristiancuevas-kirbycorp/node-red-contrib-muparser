@@ -1,19 +1,30 @@
 "use strict";
 const path = require('path');
 const addonPath = path.join(__dirname, 'build', 'Release', 'muparser_node.node');
-let MuParser;
+let MuParser = null;
+let addonLoaded = false;
 
 module.exports = function (RED) {
     try {
-        MuParser = require(addonPath).MuParser;
+        const addon = require(addonPath);
+        MuParser = addon.MuParser;
+        addonLoaded = true;
+        RED.log.info("muParser native addon loaded successfully");
     } catch (err) {
         RED.log.error("Failed to load muparser_node.node: " + err.message);
-        return;
+        RED.log.error("Please rebuild the addon with: cd " + __dirname + " && npm run build");
+        // Don't return - still register the node so Node-RED doesn't crash
+        addonLoaded = false;
     }
 
     function MuParserNode(config) {
         RED.nodes.createNode(this, config);
         const node = this;
+        
+        // Show status if addon not loaded
+        if (!addonLoaded) {
+            node.status({fill:"red", shape:"ring", text:"Addon not loaded - rebuild required"});
+        }
 
         // Helper function to evaluate expression with given variables
         function evaluateExpression(expression, variables) {
@@ -82,6 +93,23 @@ module.exports = function (RED) {
         }
 
         node.on('input', function (msg) {
+            // Check if the addon is loaded
+            if (!addonLoaded) {
+                node.status({fill:"red", shape:"ring", text:"Addon not loaded"});
+                node.error("muParser addon not loaded. Please rebuild with: npm run build", msg);
+                const errorMsg = RED.util.cloneMessage(msg);
+                errorMsg.error = {
+                    message: "muParser addon not loaded. Run 'npm run build' in the node directory.",
+                    source: {
+                        id: node.id,
+                        type: node.type,
+                        name: node.name
+                    }
+                };
+                node.send([null, errorMsg]);
+                return;
+            }
+            
             try {
                 let expression;
                 // Handle expression: dynamic or static
