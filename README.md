@@ -6,40 +6,125 @@
 
 ---
 
-
 ## Features
 
-- **Blazing-fast C++ engine**: 15M–18M+ evaluations/sec on modern CPUs
-- **Node-RED UI**: Intuitive node for entering math expressions and mapping variables
-- **Dynamic expressions**: Use a static expression or set it dynamically from any property (e.g., `msg.payload.expression`)
-- **Flexible variable mapping**: Map variables to any property in the incoming message (e.g., `payload.x`, `msg.temp`)
-- **Variables via `msg.vars` or node config**: Pass variables as an object in `msg.vars` or configure in the node
-- **Rich function/operator support**: All muParser built-ins, including:
+- **Blazing-fast C++ engine**: 18M+ evaluations/sec on modern CPUs
+- **Static or dynamic expressions**: Define once or load from message properties
+- **Flexible variable sources**: Manual mapping, object-based, or auto-detect from `msg.vars`
+- **Custom output location**: Store results anywhere (msg/flow/global properties)
+- **Batch processing mode**: Process arrays element-by-element automatically
+- **Dual outputs**: Separate routing for successful results and errors
+- **Live status indicator**: Visual feedback showing current state and results
+- **Rich function library**: All muParser built-ins including:
     - Arithmetic: `+`, `-`, `*`, `/`, `^`, `**`, parentheses
-    - Trigonometric: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `tanh`
+    - Trigonometric: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`
     - Logarithmic: `ln`, `log10`, `log2`, `exp`
     - Rounding: `floor`, `ceil`, `round`, `abs`, `sign`
     - Min/Max: `min(a,b)`, `max(a,b)`
     - Conditional: `if(cond, true, false)`
+    - Comparison: `<`, `>`, `<=`, `>=`, `==`, `!=`
+    - Logical: `&&`, `||`, `!`
     - Constants: `pi`, `e`
-- **Multiple outputs**: Return arrays by using comma-separated expressions (e.g., `x*cos(theta), x*sin(theta)`)
+- **Multiple outputs**: Return arrays using comma-separated expressions (e.g., `x*cos(theta), x*sin(theta)`)
 - **No JavaScript eval()**: Safe, native, and fast
-- **Error handling**: Errors are reported in the Node-RED debug tab
-- **Cross-platform**: Windows, Linux, macOS (untested)
+- **Enhanced error messages**: Detailed context for debugging
+- **Cross-platform**: Windows, Linux, macOS
 
 ---
 
-### Example Usage
+## Quick Examples
 
-**Expression:** `sqrt(x^2 + y^2) + sin(z)`  
-**Variables:**
-    - `x` → `payload.x`
-    - `y` → `payload.y`
-    - `z` → `payload.angle`
-**Input:** `{ "x": 3, "y": 4, "angle": 1.57 }`
-**Output:** `5.999...` (≈ 6)
+### Example 1: Basic Usage
+```javascript
+// Expression: sqrt(x^2 + y^2)
+// Variables: x → msg.payload.x, y → msg.payload.y
+
+Input:  { "payload": { "x": 3, "y": 4 } }
+Output: { "payload": 5 }
+```
+
+### Example 2: Custom Output Location
+```javascript
+// Expression: temp * 1.8 + 32
+// Variables: temp → msg.payload.celsius
+// Result to: msg.payload.fahrenheit
+
+Input:  { "payload": { "celsius": 25 } }
+Output: { "payload": { "celsius": 25, "fahrenheit": 77 } }
+```
+
+### Example 3: Batch Processing
+```javascript
+// Expression: x^2 + 1
+// Variables: x → msg.payload (batch mode enabled)
+
+Input:  { "payload": [1, 2, 3, 4] }
+Output: { "payload": [2, 5, 10, 17] }
+```
+
+### Example 4: Variables from Object
+```javascript
+// Expression: a + b * c
+// Variables from: msg.vars
+
+Input:  { "vars": { "a": 10, "b": 5, "c": 2 } }
+Output: { "payload": 20 }
+```
+
+### Example 5: Dynamic Expression
+```javascript
+// Expression from: msg.formula
+// Variables from: msg.params
+
+Input:  { 
+  "formula": "radius * radius * pi",
+  "params": { "radius": 5 }
+}
+Output: { "payload": 78.54 }  // ≈ area of circle
+```
+
+### Example 6: Error Handling
+```javascript
+// Expression: sqrt(x)
+// Variables: x → msg.value
+// Output 1: Success, Output 2: Errors
+
+Input to Output 1:  { "value": 16 }
+→ { "payload": 4 }
+
+Input to Output 2:  { "value": -4 }
+→ { "value": -4, "error": { "message": "...", "source": {...} } }
+```
 
 ---
+
+## Configuration
+
+### Expression
+- **Static**: Enter expression directly in the node configuration
+- **Dynamic**: Load expression from a message property (msg/flow/global)
+
+### Variables
+- **Define manually**: Map each variable to a specific property path
+  - Example: `x` → `msg.payload.x`, `y` → `msg.payload.y`
+- **From object**: Point to an object containing all variables
+  - Example: `msg.payload.vars` where object is `{x: 3, y: 4}`
+- **Auto-detect**: Automatically uses `msg.vars` if no variables are configured
+
+### Output
+- **Result to**: Choose where to store the result (default: `msg.payload`)
+  - Supports msg, flow, and global contexts
+- **Batch mode**: When enabled, processes array inputs element-by-element
+  - Each element becomes the variable, or if element is an object, its properties become variables
+- **Dual outputs**:
+  - Output 1: Messages with successful results
+  - Output 2: Messages with errors (includes original message + error details)
+
+### Status Indicator
+The node displays real-time status:
+- **Green dot**: Success (shows result value)
+- **Red ring**: Error occurred
+- **Processing count**: Shows number of items processed in batch mode
 
 ---
 ## Build and Install

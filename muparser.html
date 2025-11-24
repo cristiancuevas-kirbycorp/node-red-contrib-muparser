@@ -16,9 +16,7 @@
     <div class="form-row">
         <input type="radio" name="expression-mode" id="node-input-useDynamicExpression" value="dynamic" style="width:auto; margin-right: 5px;">
         <label for="node-input-useDynamicExpression" style="width: auto; margin-right: 10px;">Dynamic</label>
-        <input type="hidden" id="node-input-expressionPath">
-        <input type="hidden" id="node-input-expressionPathType">
-        <div id="node-input-expressionPath-container" style="display: inline-block; width: 70%;"></div>
+        <input type="text" id="node-input-expressionPath" style="width:70%;">
     </div>
     
     <!-- Variables Section -->
@@ -35,12 +33,58 @@
     <div class="form-row">
         <input type="radio" name="vars-mode" id="node-input-useDynamicVars" value="dynamic" style="width:auto; margin-right: 5px;">
         <label for="node-input-useDynamicVars" style="width: auto; margin-right: 10px;">From object</label>
-        <input type="hidden" id="node-input-varsPath">
-        <input type="hidden" id="node-input-varsPathType">
-        <div id="node-input-varsPath-container" style="display: inline-block; width: 70%;"></div>
+        <input type="text" id="node-input-varsPath" style="width:70%;">
     </div>
     <div class="form-row" style="margin-left: 25px;">
         <span style="font-size: 0.85em; color: #999; font-style: italic;">💡 Tip: Use <code>msg.vars</code> to pass variables as an object</span>
+    </div>
+    
+    <!-- Output Section -->
+    <div class="form-row" style="margin-top: 20px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
+        <label style="font-weight: bold; width: 100%;"><i class="fa fa-sign-out"></i> Output</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-outputProperty" style="width: auto; margin-right: 10px;">Result to:</label>
+        <input type="text" id="node-input-outputProperty" style="width: 70%;">
+    </div>
+    <div class="form-row">
+        <label style="width: auto;">
+            <input type="checkbox" id="node-input-batchMode" style="width:auto; vertical-align:middle;">
+            <span>Batch mode (process arrays)</span>
+        </label>
+    </div>
+    <div class="form-row" style="margin-left: 25px;">
+        <span style="font-size: 0.85em; color: #999; font-style: italic;">When enabled, if input is an array, the expression will be evaluated for each element</span>
+    </div>
+    
+    <!-- Function Reference Section (collapsible) -->
+    <div class="form-row" style="margin-top: 20px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
+        <label style="font-weight: bold; width: 100%; cursor: pointer;" id="function-ref-toggle">
+            <i class="fa fa-book"></i> Function Reference
+            <i class="fa fa-caret-down" style="float: right;"></i>
+        </label>
+    </div>
+    <div id="function-ref-content" style="display: none; padding: 10px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 3px; margin-bottom: 10px;">
+        <table style="width:100%; font-size:0.85em;">
+            <tr style="background:#e8e8e8;"><th style="padding:4px;">Category</th><th style="padding:4px;">Functions</th><th style="padding:4px;">Example</th></tr>
+            <tr><td><b>Arithmetic</b></td><td><code>+ - * / ^</code></td><td><code>2 + 3 * 4</code></td></tr>
+            <tr><td><b>Power</b></td><td><code>pow(a,b)</code> <code>sqrt(x)</code></td><td><code>pow(2,8) = 256</code></td></tr>
+            <tr><td><b>Trigonometry</b></td><td><code>sin cos tan</code></td><td><code>sin(pi/2) = 1</code></td></tr>
+            <tr><td><b>Inverse Trig</b></td><td><code>asin acos atan atan2</code></td><td><code>atan2(y,x)</code></td></tr>
+            <tr><td><b>Hyperbolic</b></td><td><code>sinh cosh tanh</code></td><td><code>sinh(1)</code></td></tr>
+            <tr><td><b>Logarithmic</b></td><td><code>ln log10 log2</code></td><td><code>ln(e) = 1</code></td></tr>
+            <tr><td><b>Exponential</b></td><td><code>exp(x)</code></td><td><code>exp(1) = e</code></td></tr>
+            <tr><td><b>Rounding</b></td><td><code>floor ceil round</code></td><td><code>round(3.7) = 4</code></td></tr>
+            <tr><td><b>Absolute</b></td><td><code>abs(x) sign(x)</code></td><td><code>abs(-5) = 5</code></td></tr>
+            <tr><td><b>Min/Max</b></td><td><code>min(a,b) max(a,b)</code></td><td><code>max(3,7) = 7</code></td></tr>
+            <tr><td><b>Conditional</b></td><td><code>if(cond,true,false)</code></td><td><code>if(x>0, 1, -1)</code></td></tr>
+            <tr><td><b>Comparison</b></td><td><code>< > <= >= == !=</code></td><td><code>x > 5</code></td></tr>
+            <tr><td><b>Logical</b></td><td><code>&& || !</code></td><td><code>(x>0) && (y<10)</code></td></tr>
+            <tr><td><b>Constants</b></td><td><code>pi e</code></td><td><code>pi = 3.14159...</code></td></tr>
+        </table>
+        <p style="margin-top:10px; font-size:0.85em; color:#666;">
+            <b>Multiple outputs:</b> Use comma to return array: <code>sin(x), cos(x)</code> → <code>[0.5, 0.866]</code>
+        </p>
     </div>
 </script>
 
@@ -49,72 +93,129 @@
     <p><strong>Ultra-fast math expression evaluator using muParser (C++ compiled)</strong></p>
     <p>Performs <strong>18+ million evaluations per second</strong> — ideal for real-time signal processing, control systems, or high-frequency data.</p>
 
-    <h4>How to Use</h4>
+    <h4>Features</h4>
+    <ul>
+        <li><strong>Static or dynamic expressions</strong>: Define once or load from message</li>
+        <li><strong>Flexible variable sources</strong>: Manual mapping, object-based, or msg.vars</li>
+        <li><strong>Custom output location</strong>: Store results anywhere (msg/flow/global)</li>
+        <li><strong>Batch processing</strong>: Process arrays element-by-element</li>
+        <li><strong>Dual outputs</strong>: Separate result and error routing</li>
+        <li><strong>Live status</strong>: Visual feedback of current state</li>
+    </ul>
+
+    <h4>Configuration</h4>
     
-    <h5>1. Expression</h5>
+    <h5>Expression</h5>
     <ul>
         <li><strong>Static</strong>: Enter expression directly (e.g., <code>sqrt(x^2 + y^2)</code>)</li>
-        <li><strong>From message</strong>: Point to a property containing the expression (e.g., <code>payload.expression</code>)</li>
+        <li><strong>Dynamic</strong>: Load from message property (e.g., <code>msg.expression</code>)</li>
     </ul>
     
-    <h5>2. Variables</h5>
+    <h5>Variables</h5>
     <ul>
         <li><strong>Define manually</strong>: Map each variable to a message property
-            <ul><li>Example: <code>x</code> → <code>payload.x</code>, <code>y</code> → <code>payload.y</code></li></ul>
+            <ul><li>Example: <code>x</code> → <code>msg.payload.x</code>, <code>y</code> → <code>msg.payload.y</code></li></ul>
         </li>
         <li><strong>From object</strong>: Point to an object containing all variables
-            <ul><li>Example: Set to <code>payload.vars</code> if <code>msg.payload.vars = {x:3, y:4}</code></li></ul>
+            <ul><li>Example: <code>msg.payload.vars</code> where <code>{x:3, y:4}</code></li></ul>
         </li>
-        <li><strong>Using msg.vars</strong>: Send variables in <code>msg.vars</code> (auto-detected)</li>
+        <li><strong>Auto-detect</strong>: Automatically uses <code>msg.vars</code> if no variables configured</li>
     </ul>
 
-    <h4>Example 1: Manual Variables</h4>
+    <h5>Output</h5>
+    <ul>
+        <li><strong>Result to</strong>: Choose where to store the result (default: <code>msg.payload</code>)</li>
+        <li><strong>Batch mode</strong>: When enabled, processes array inputs element-by-element</li>
+        <li><strong>Output 1</strong>: Successful results</li>
+        <li><strong>Output 2</strong>: Errors (original message + error details)</li>
+    </ul>
+
+    <h4>Examples</h4>
+    
+    <h5>Example 1: Basic Usage</h5>
     <pre>
-Expression: sqrt(x^2 + y^2) + sin(z)
+Expression: sqrt(x^2 + y^2)
 Variables:
-  x → payload.x
-  y → payload.y
-  z → payload.angle
+  x → msg.payload.x
+  y → msg.payload.y
   
-Input:  { "payload": { "x": 3, "y": 4, "angle": 1.57 } }
-Output: msg.payload = 5.999... (≈ 6)
+Input:  { "payload": { "x": 3, "y": 4 } }
+Output: msg.payload = 5
     </pre>
     
-    <h4>Example 2: Variables from Object</h4>
+    <h5>Example 2: Custom Output Location</h5>
     <pre>
 Expression: temp * 1.8 + 32
-Variables from: payload.sensor
+Variables: temp → msg.payload.celsius
+Result to: msg.payload.fahrenheit
 
-Input:  { "payload": { "sensor": { "temp": 25 } } }
-Output: msg.payload = 77 (Celsius to Fahrenheit)
+Input:  { "payload": { "celsius": 25 } }
+Output: { "payload": { "celsius": 25, "fahrenheit": 77 } }
     </pre>
     
-    <h4>Example 3: Using msg.vars</h4>
+    <h5>Example 3: Batch Processing</h5>
+    <pre>
+Expression: x^2 + 1
+Variables: x → msg.payload (batch mode enabled)
+Result to: msg.payload
+
+Input:  { "payload": [1, 2, 3, 4] }
+Output: { "payload": [2, 5, 10, 17] }
+    </pre>
+
+    <h5>Example 4: Variables from Object</h5>
     <pre>
 Expression: a + b * c
-Variables: (none configured - uses msg.vars)
+Variables from: msg.vars
 
 Input:  { "vars": { "a": 10, "b": 5, "c": 2 } }
 Output: msg.payload = 20
     </pre>
 
-    <h4>Supported Operators & Functions</h4>
+    <h5>Example 5: Dynamic Expression</h5>
+    <pre>
+Expression from: msg.formula
+Variables from: msg.params
+
+Input:  { 
+  "formula": "radius * radius * pi",
+  "params": { "radius": 5 }
+}
+Output: msg.payload = 78.54 (≈ area of circle)
+    </pre>
+
+    <h5>Example 6: Error Handling</h5>
+    <pre>
+Expression: sqrt(x)
+Variables: x → msg.value
+
+Input (output 1):  { "value": 16 }
+Output: msg.payload = 4
+
+Input (output 2):  { "value": -4 }
+Output: { "value": -4, "error": { "message": "...", "source": {...} } }
+    </pre>
+
+    <h4>Supported Functions</h4>
     <table style="width:100%; font-size:0.9em;">
         <tr><th>Category</th><th>Functions</th></tr>
-        <tr><td><strong>Basic</strong></td><td><code>+ - * / ^ ** ( )</code></td></tr>
-        <tr><td><strong>Power</strong></td><td><code>pow(a,b) = a^b</code></td></tr>
-        <tr><td><strong>Trig</strong></td><td><code>sin cos tan asin acos atan sinh cosh tanh</code></td></tr>
+        <tr><td><strong>Arithmetic</strong></td><td><code>+ - * / ^ **</code></td></tr>
+        <tr><td><strong>Power</strong></td><td><code>pow(a,b) sqrt(x)</code></td></tr>
+        <tr><td><strong>Trig</strong></td><td><code>sin cos tan asin acos atan atan2 sinh cosh tanh</code></td></tr>
         <tr><td><strong>Log/Exp</strong></td><td><code>ln log10 log2 exp</code></td></tr>
         <tr><td><strong>Rounding</strong></td><td><code>floor ceil round abs sign</code></td></tr>
         <tr><td><strong>Min/Max</strong></td><td><code>min(a,b) max(a,b)</code></td></tr>
         <tr><td><strong>Conditional</strong></td><td><code>if(cond, true, false)</code></td></tr>
-        <tr><td><strong>Constants</strong></td><td><code>pi = 3.14159...</code><br><code>e = 2.71828...</code></td></tr>
+        <tr><td><strong>Comparison</strong></td><td><code>&lt; &gt; &lt;= &gt;= == !=</code></td></tr>
+        <tr><td><strong>Logical</strong></td><td><code>&& || !</code></td></tr>
+        <tr><td><strong>Constants</strong></td><td><code>pi = 3.14159...</code> <code>e = 2.71828...</code></td></tr>
     </table>
 
-    <h4>Advanced: Multiple Outputs</h4>
-    <p>Use commas to return multiple values:</p>
+    <h4>Multiple Outputs</h4>
+    <p>Use commas to return multiple values as an array:</p>
     <pre>
-Expression: x * cos(theta), x * sin(theta)
+Expression: r * cos(theta), r * sin(theta)
+Variables: r → msg.r, theta → msg.angle
 → msg.payload = [x_coord, y_coord]
     </pre>
 
@@ -122,19 +223,21 @@ Expression: x * cos(theta), x * sin(theta)
     <ul>
         <li><strong>18M+ evaluations/sec</strong> on modern CPU</li>
         <li><strong>No JavaScript eval()</strong> — safe & fast</li>
-        <li>Compiled with <code>node-gyp</code> + <code>muParser</code></li>
+        <li>Compiled native C++ addon using <code>node-gyp</code></li>
+        <li>Ideal for real-time processing, control loops, signal analysis</li>
     </ul>
 
     <h4>Tips</h4>
     <ul>
-        <li>Use <code>**</code> or <code>^</code> for power</li>
-        <li>Parentheses <code>()</code> for grouping</li>
-        <li>Case-sensitive variables</li>
-        <li>Errors appear in debug tab</li>
+        <li>Variables are case-sensitive</li>
+        <li>Use parentheses <code>()</code> for grouping</li>
+        <li>All variable values must be numbers</li>
+        <li>Errors include detailed context for debugging</li>
+        <li>Status indicator shows current state and results</li>
     </ul>
 
     <hr>
-    <p><em>Built with muParser — <a href="https://beltoforion.de/en/muparser/" target="_blank">beltoforion.de</a></em></p>
+    <p><em>Built with muParser library — <a href="https://beltoforion.de/en/muparser/" target="_blank">beltoforion.de</a></em></p>
 </script>
 
 <script type="text/javascript">
@@ -143,36 +246,62 @@ Expression: x * cos(theta), x * sin(theta)
         color: '#a6e22e',
         defaults: {
             name: { value: "" },
-            expression: { value: "x + y", required: true },
+            expression: { 
+                value: "x + y",
+                validate: function(v) {
+                    // Only validate if using static expression mode
+                    return this.useExpressionFrom ? true : (v && v.trim().length > 0);
+                }
+            },
             vars: { value: [] },
             useExpressionFrom: { value: false },
-            expressionPath: { value: "" },
+            expressionPath: { 
+                value: "",
+                validate: function(v) {
+                    // Only validate if using dynamic expression mode
+                    return this.useExpressionFrom ? (v && v.trim().length > 0) : true;
+                }
+            },
             expressionPathType: { value: "msg" },
             useVarsFrom: { value: false },
-            varsPath: { value: "" },
-            varsPathType: { value: "msg" }
+            varsPath: { 
+                value: "",
+                validate: function(v) {
+                    // Only validate if using dynamic vars mode
+                    return this.useVarsFrom ? (v && v.trim().length > 0) : true;
+                }
+            },
+            varsPathType: { value: "msg" },
+            outputProperty: { value: "payload" },
+            outputPropertyType: { value: "msg" },
+            batchMode: { value: false }
         },
         inputs: 1,
-        outputs: 1,
+        outputs: 2,
         icon: "calculator.svg",
         paletteLabel: "muParser",
         label: function() { return this.name || "muParser"; },
         oneditprepare: function() {
             // Initialize TypedInput for expression path
-            $("#node-input-expressionPath-container").typedInput({
+            $("#node-input-expressionPath").typedInput({
                 type: this.expressionPathType || "msg",
                 types: ["msg", "flow", "global"],
                 typeField: "#node-input-expressionPathType"
             });
-            $("#node-input-expressionPath-container").typedInput('value', this.expressionPath || 'payload.expression');
 
             // Initialize TypedInput for vars path
-            $("#node-input-varsPath-container").typedInput({
+            $("#node-input-varsPath").typedInput({
                 type: this.varsPathType || "msg",
                 types: ["msg", "flow", "global"],
                 typeField: "#node-input-varsPathType"
             });
-            $("#node-input-varsPath-container").typedInput('value', this.varsPath || 'payload.vars');
+
+            // Initialize TypedInput for output property
+            $("#node-input-outputProperty").typedInput({
+                type: this.outputPropertyType || "msg",
+                types: ["msg", "flow", "global"],
+                typeField: "#node-input-outputPropertyType"
+            });
 
             // Initialize editableList for variables
             $("#node-input-vars-container").css({
@@ -262,32 +391,32 @@ Expression: x * cos(theta), x * sin(theta)
             if (this.useExpressionFrom) {
                 $("#node-input-useDynamicExpression").prop("checked", true);
                 $("#node-input-expression").prop("disabled", true);
-                $("#node-input-expressionPath-container").typedInput('enable');
+                $("#node-input-expressionPath").typedInput('enable');
             } else {
                 $("#node-input-useStaticExpression").prop("checked", true);
                 $("#node-input-expression").prop("disabled", false);
-                $("#node-input-expressionPath-container").typedInput('disable');
+                $("#node-input-expressionPath").typedInput('disable');
             }
 
             // Set initial state for vars mode
             if (this.useVarsFrom) {
                 $("#node-input-useDynamicVars").prop("checked", true);
                 $("#static-vars-section").hide();
-                $("#node-input-varsPath-container").typedInput('enable');
+                $("#node-input-varsPath").typedInput('enable');
             } else {
                 $("#node-input-useStaticVars").prop("checked", true);
                 $("#static-vars-section").show();
-                $("#node-input-varsPath-container").typedInput('disable');
+                $("#node-input-varsPath").typedInput('disable');
             }
 
             // Handle expression mode changes
             $("input[name='expression-mode']").on("change", function () {
                 if ($("#node-input-useStaticExpression").is(":checked")) {
                     $("#node-input-expression").prop("disabled", false);
-                    $("#node-input-expressionPath-container").typedInput('disable');
+                    $("#node-input-expressionPath").typedInput('disable');
                 } else {
                     $("#node-input-expression").prop("disabled", true);
-                    $("#node-input-expressionPath-container").typedInput('enable');
+                    $("#node-input-expressionPath").typedInput('enable');
                 }
             });
 
@@ -295,23 +424,42 @@ Expression: x * cos(theta), x * sin(theta)
             $("input[name='vars-mode']").on("change", function () {
                 if ($("#node-input-useStaticVars").is(":checked")) {
                     $("#static-vars-section").show();
-                    $("#node-input-varsPath-container").typedInput('disable');
+                    $("#node-input-varsPath").typedInput('disable');
                 } else {
                     $("#static-vars-section").hide();
-                    $("#node-input-varsPath-container").typedInput('enable');
+                    $("#node-input-varsPath").typedInput('enable');
+                }
+            });
+
+            // Handle function reference toggle
+            $("#function-ref-toggle").on("click", function() {
+                const content = $("#function-ref-content");
+                const icon = $(this).find(".fa-caret-down, .fa-caret-up");
+                
+                if (content.is(":visible")) {
+                    content.slideUp(200);
+                    icon.removeClass("fa-caret-up").addClass("fa-caret-down");
+                } else {
+                    content.slideDown(200);
+                    icon.removeClass("fa-caret-down").addClass("fa-caret-up");
                 }
             });
         },
         oneditsave: function() {
             // Save expression settings
             this.useExpressionFrom = $("#node-input-useDynamicExpression").is(":checked");
-            this.expressionPath = $("#node-input-expressionPath-container").typedInput('value');
-            this.expressionPathType = $("#node-input-expressionPath-container").typedInput('type');
+            this.expressionPath = $("#node-input-expressionPath").typedInput('value');
+            this.expressionPathType = $("#node-input-expressionPath").typedInput('type');
 
             // Save vars settings
             this.useVarsFrom = $("#node-input-useDynamicVars").is(":checked");
-            this.varsPath = $("#node-input-varsPath-container").typedInput('value');
-            this.varsPathType = $("#node-input-varsPath-container").typedInput('type');
+            this.varsPath = $("#node-input-varsPath").typedInput('value');
+            this.varsPathType = $("#node-input-varsPath").typedInput('type');
+
+            // Save output settings
+            this.outputProperty = $("#node-input-outputProperty").typedInput('value');
+            this.outputPropertyType = $("#node-input-outputProperty").typedInput('type');
+            this.batchMode = $("#node-input-batchMode").is(":checked");
 
             // Save variable list
             const vars = [];

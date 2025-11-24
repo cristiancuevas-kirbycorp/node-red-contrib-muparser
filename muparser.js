@@ -15,6 +15,72 @@ module.exports = function (RED) {
         RED.nodes.createNode(this, config);
         const node = this;
 
+        // Helper function to evaluate expression with given variables
+        function evaluateExpression(expression, variables) {
+            const p = new MuParser();
+            p.setExpression(expression);
+            
+            // Set all variables
+            Object.keys(variables).forEach(name => {
+                const val = Number(variables[name]);
+                if (isNaN(val)) {
+                    throw new Error(`Variable '${name}' has non-numeric value '${variables[name]}' (type: ${typeof variables[name]}). All variable values must be numbers.`);
+                }
+                p.setVar(name, val);
+            });
+            
+            return p.eval();
+        }
+
+        // Helper function to gather variables from message
+        function getVariables(msg) {
+            const variables = {};
+            
+            if (config.useVarsFrom) {
+                // Mode 1: Dynamic - Get variables from object at specified path
+                const pathType = config.varsPathType || 'msg';
+                const variableSource = RED.util.evaluateNodeProperty(
+                    config.varsPath,
+                    pathType,
+                    node,
+                    msg
+                );
+                if (!variableSource) {
+                    throw new Error(`Variables object not found: ${pathType}.${config.varsPath} is ${variableSource === null ? 'null' : 'undefined'}. Ensure the property exists and contains an object with variable names and numeric values.`);
+                }
+                if (typeof variableSource !== 'object') {
+                    throw new Error(`Variables must be an object: ${pathType}.${config.varsPath} is type '${typeof variableSource}' with value: ${JSON.stringify(variableSource)}. Expected an object like {x: 1, y: 2}.`);
+                }
+                Object.assign(variables, variableSource);
+            } else {
+                // Mode 2: Static - Use config.vars mapping (if defined)
+                const varsMapping = (config.vars && config.vars.length > 0) ? config.vars : null;
+                
+                if (varsMapping) {
+                    // Static mapping: each variable maps to a message property with type
+                    varsMapping.forEach(varDef => {
+                        const name = varDef.name;
+                        const valType = varDef.valueType || 'msg';
+                        const val = RED.util.evaluateNodeProperty(
+                            varDef.value,
+                            valType,
+                            node,
+                            msg
+                        );
+                        if (val === undefined || val === null) {
+                            throw new Error(`Variable '${name}' not found: ${valType}.${varDef.value} is ${val === null ? 'null' : 'undefined'}. Check that the property path is correct.`);
+                        }
+                        variables[name] = val;
+                    });
+                } else if (msg.vars && typeof msg.vars === 'object') {
+                    // Mode 3: Fallback - Use msg.vars if no static vars configured
+                    Object.assign(variables, msg.vars);
+                }
+            }
+            
+            return variables;
+        }
+
         node.on('input', function (msg) {
             try {
                 let expression;
@@ -27,76 +93,91 @@ module.exports = function (RED) {
                         msg
                     );
                     if (expression === undefined || expression === null || expression === "") {
-                        throw new Error("Expression not found or empty at: " + config.expressionPath);
+                        const pathType = config.expressionPathType || 'msg';
+                        throw new Error(`Expression not found: ${pathType}.${config.expressionPath} is ${expression === null ? 'null' : expression === undefined ? 'undefined' : 'empty'}. Check that the property exists and contains a valid expression string.`);
                     }
                 } else {
                     expression = config.expression || "0";
                 }
 
-                const p = new MuParser();
-                p.setExpression(expression);
+                // Get variables
+                const variables = getVariables(msg);
 
-                // Handle variables: three modes with priority order
-                if (config.useVarsFrom) {
-                    // Mode 1: Dynamic - Get variables from object at specified path
-                    const variableSource = RED.util.evaluateNodeProperty(
-                        config.varsPath,
-                        config.varsPathType || 'msg',
+                // Handle batch mode
+                if (config.batchMode) {
+                    // Check if we should process as batch
+                    const inputValue = RED.util.evaluateNodeProperty(
+                        config.outputProperty || 'payload',
+                        config.outputPropertyType || 'msg',
                         node,
                         msg
                     );
-                    if (!variableSource || typeof variableSource !== 'object') {
-                        throw new Error("Variables not found or not an object at: " + config.varsPath);
-                    }
-                    // Set variables directly from the object
-                    Object.keys(variableSource).forEach(name => {
-                        const val = Number(variableSource[name]);
-                        if (isNaN(val)) {
-                            throw new Error(`Variable '${name}' has non-numeric value: ${variableSource[name]}`);
-                        }
-                        p.setVar(name, val);
-                    });
-                } else {
-                    // Mode 2: Static - Use config.vars mapping (if defined)
-                    // Mode 3: Fallback - Use msg.vars if no static vars configured
-                    const varsMapping = (config.vars && config.vars.length > 0) ? config.vars : null;
                     
-                    if (varsMapping) {
-                        // Static mapping: each variable maps to a message property with type
-                        varsMapping.forEach(varDef => {
-                            const name = varDef.name;
-                            const val = RED.util.evaluateNodeProperty(
-                                varDef.value,
-                                varDef.valueType || 'msg',
-                                node,
-                                msg
-                            );
-                            if (val === undefined || val === null) {
-                                throw new Error(`Variable '${name}' not found at: ${varDef.value}`);
+                    if (Array.isArray(inputValue)) {
+                        // Process each element in the array
+                        const results = inputValue.map(item => {
+                            // Create a copy of variables and add the array item
+                            const itemVars = Object.assign({}, variables);
+                            // If item is an object, merge its properties as variables
+                            if (typeof item === 'object' && item !== null) {
+                                Object.assign(itemVars, item);
+                            } else {
+                                // If item is a scalar, use it as 'x' variable
+                                itemVars.x = item;
                             }
-                            const numVal = Number(val);
-                            if (isNaN(numVal)) {
-                                throw new Error(`Variable '${name}' has non-numeric value: ${val}`);
-                            }
-                            p.setVar(name, numVal);
+                            return evaluateExpression(expression, itemVars);
                         });
-                    } else if (msg.vars && typeof msg.vars === 'object') {
-                        // Fallback: use msg.vars object
-                        Object.keys(msg.vars).forEach(name => {
-                            const val = Number(msg.vars[name]);
-                            if (isNaN(val)) {
-                                throw new Error(`Variable '${name}' in msg.vars has non-numeric value: ${msg.vars[name]}`);
-                            }
-                            p.setVar(name, val);
-                        });
+                        
+                        // Set result to output property
+                        RED.util.setMessageProperty(
+                            msg,
+                            config.outputProperty || 'payload',
+                            results,
+                            true
+                        );
+                        
+                        // Update status
+                        node.status({fill:"green", shape:"dot", text:`Processed ${results.length} items`});
+                        node.send([msg, null]);
+                        return;
                     }
-                    // If neither static vars nor msg.vars exist, proceed with no variables
                 }
 
-                msg.payload = p.eval();
-                node.send(msg);
+                // Normal single evaluation
+                const result = evaluateExpression(expression, variables);
+                
+                // Set result to output property
+                RED.util.setMessageProperty(
+                    msg,
+                    config.outputProperty || 'payload',
+                    result,
+                    true
+                );
+                
+                // Update status with result
+                const statusText = Array.isArray(result) 
+                    ? `[${result.length} values]` 
+                    : result.toFixed(3);
+                node.status({fill:"green", shape:"dot", text:statusText});
+                
+                node.send([msg, null]);
             } catch (err) {
+                // Update status with error
+                node.status({fill:"red", shape:"ring", text:"Error"});
+                
+                // Send error to second output
+                const errorMsg = RED.util.cloneMessage(msg);
+                errorMsg.error = {
+                    message: err.message,
+                    source: {
+                        id: node.id,
+                        type: node.type,
+                        name: node.name
+                    }
+                };
+                
                 node.error("muParser error: " + err.message, msg);
+                node.send([null, errorMsg]);
             }
         });
     }
