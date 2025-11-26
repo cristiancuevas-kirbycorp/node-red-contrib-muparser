@@ -56,6 +56,15 @@
     <div class="form-row" style="margin-left: 25px;">
         <span style="font-size: 0.85em; color: #999; font-style: italic;">When enabled, if input is an array, the expression will be evaluated for each element</span>
     </div>
+    <div class="form-row">
+        <label style="width: auto;">
+            <input type="checkbox" id="node-input-multiExpressionMode" style="width:auto; vertical-align:middle;">
+            <span>Multi-expression mode</span>
+        </label>
+    </div>
+    <div class="form-row" style="margin-left: 25px;">
+        <span style="font-size: 0.85em; color: #999; font-style: italic;">When enabled, if expression is an array, each expression will be evaluated with the same variables</span>
+    </div>
     
     <!-- Function Reference Section (collapsible) -->
     <div class="form-row" style="margin-top: 20px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
@@ -126,6 +135,7 @@
     <ul>
         <li><strong>Result to</strong>: Choose where to store the result (default: <code>msg.payload</code>)</li>
         <li><strong>Batch mode</strong>: When enabled, processes array inputs element-by-element</li>
+        <li><strong>Multi-expression mode</strong>: When enabled, evaluates array of expressions with shared variables</li>
         <li><strong>Output 1</strong>: Successful results</li>
         <li><strong>Output 2</strong>: Errors (original message + error details)</li>
     </ul>
@@ -194,6 +204,19 @@ Output: msg.payload = 4
 
 Input (output 2):  { "value": -4 }
 Output: { "value": -4, "error": { "message": "...", "source": {...} } }
+    </pre>
+
+    <h5>Example 7: Multi-Expression Mode</h5>
+    <pre>
+Expression from: msg.formulas (multi-expression mode enabled)
+Variables: r → msg.radius, theta → msg.angle
+
+Input:  { 
+  "formulas": ["r * cos(theta)", "r * sin(theta)", "r"],
+  "radius": 5,
+  "angle": 1.047  // 60 degrees in radians
+}
+Output: msg.payload = [2.5, 4.33, 5]  // [x, y, radius]
     </pre>
 
     <h4>Supported Functions</h4>
@@ -274,7 +297,8 @@ Variables: r → msg.r, theta → msg.angle
             varsPathType: { value: "msg" },
             outputProperty: { value: "payload" },
             outputPropertyType: { value: "msg" },
-            batchMode: { value: false }
+            batchMode: { value: false },
+            multiExpressionMode: { value: false }
         },
         inputs: 1,
         outputs: 2,
@@ -460,6 +484,7 @@ Variables: r → msg.r, theta → msg.angle
             this.outputProperty = $("#node-input-outputProperty").typedInput('value');
             this.outputPropertyType = $("#node-input-outputProperty").typedInput('type');
             this.batchMode = $("#node-input-batchMode").is(":checked");
+            this.multiExpressionMode = $("#node-input-multiExpressionMode").is(":checked");
 
             // Save variable list
             const vars = [];

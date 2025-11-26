@@ -13,6 +13,7 @@
 - **Flexible variable sources**: Manual mapping, object-based, or auto-detect from `msg.vars`
 - **Custom output location**: Store results anywhere (msg/flow/global properties)
 - **Batch processing mode**: Process arrays element-by-element automatically
+- **Multi-expression mode**: Evaluate multiple expressions with shared variables (NEW in 1.3.0)
 - **Dual outputs**: Separate routing for successful results and errors
 - **Live status indicator**: Visual feedback showing current state and results
 - **Rich function library**: All muParser built-ins including:
@@ -96,6 +97,39 @@ Input to Output 2:  { "value": -4 }
 → { "value": -4, "error": { "message": "...", "source": {...} } }
 ```
 
+### Example 7: Multi-Expression Mode (NEW in 1.3.0)
+```javascript
+// Expression from: msg.formulas (multi-expression mode enabled)
+// Variables: r → msg.radius, theta → msg.angle
+
+Input:  { 
+  "formulas": ["r * cos(theta)", "r * sin(theta)", "r"],
+  "radius": 5,
+  "angle": 1.047  // 60 degrees in radians
+}
+Output: { "payload": [2.5, 4.33, 5] }  // [x, y, radius]
+```
+
+**Use Case**: Convert polar coordinates to Cartesian with a single message. All three expressions share the same `r` and `theta` variables, returning an array of results.
+
+### Example 8: Multi-Expression with Object Variables
+```javascript
+// Expression from: msg.calculations (multi-expression mode enabled)
+// Variables from: msg.data
+
+Input:  {
+  "calculations": [
+    "temp * 1.8 + 32",     // Celsius to Fahrenheit
+    "(temp - 32) * 5/9",   // Fahrenheit to Celsius
+    "temp + 273.15"        // Celsius to Kelvin
+  ],
+  "data": { "temp": 25 }
+}
+Output: { "payload": [77, -3.89, 298.15] }
+```
+
+**Use Case**: Perform multiple related calculations on the same input data, useful for generating comparison tables or multi-format outputs.
+
 ---
 
 ## Configuration
@@ -116,6 +150,11 @@ Input to Output 2:  { "value": -4 }
   - Supports msg, flow, and global contexts
 - **Batch mode**: When enabled, processes array inputs element-by-element
   - Each element becomes the variable, or if element is an object, its properties become variables
+- **Multi-expression mode** (NEW in 1.3.0): When enabled, evaluates an array of expressions with shared variables
+  - Expression must be an array (e.g., from `msg.formulas`)
+  - All expressions use the same set of variables
+  - Returns an array of results (one per expression)
+  - Perfect for calculating multiple related values in one pass
 - **Dual outputs**:
   - Output 1: Messages with successful results
   - Output 2: Messages with errors (includes original message + error details)
@@ -125,6 +164,49 @@ The node displays real-time status:
 - **Green dot**: Success (shows result value)
 - **Red ring**: Error occurred
 - **Processing count**: Shows number of items processed in batch mode
+
+---
+
+## Batch Mode vs Multi-Expression Mode
+
+Understanding the difference between these two modes:
+
+### Batch Mode
+- **One expression** evaluated **many times** with different variable sets
+- Input: Array of variable sets
+- Output: Array of results (one per variable set)
+
+```javascript
+// Expression: x^2 + 1 (batch mode enabled)
+// Input array: [1, 2, 3, 4]
+// Process: x=1 → 2, x=2 → 5, x=3 → 10, x=4 → 17
+// Output: [2, 5, 10, 17]
+```
+
+### Multi-Expression Mode (NEW)
+- **Many expressions** evaluated **once** with the same variable set
+- Input: Array of expressions + one set of variables
+- Output: Array of results (one per expression)
+
+```javascript
+// Expressions: ["x+y", "x-y", "x*y"] (multi-expression mode enabled)
+// Variables: {x: 10, y: 5}
+// Process: 10+5 → 15, 10-5 → 5, 10*5 → 50
+// Output: [15, 5, 50]
+```
+
+### When to Use Which?
+
+**Use Batch Mode when:**
+- Processing sensor data arrays
+- Applying same calculation to multiple data points
+- Filtering or transforming arrays
+
+**Use Multi-Expression Mode when:**
+- Computing multiple related values from same inputs
+- Converting units to multiple formats
+- Calculating derived metrics (min, max, avg, etc.)
+- Coordinate transformations (polar → cartesian, etc.)
 
 ---
 ## Build and Install

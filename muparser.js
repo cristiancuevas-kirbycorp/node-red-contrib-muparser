@@ -131,6 +131,30 @@ module.exports = function (RED) {
                 // Get variables
                 const variables = getVariables(msg);
 
+                // Handle multi-expression mode
+                if (config.multiExpressionMode && Array.isArray(expression)) {
+                    // Process each expression with the same variables
+                    const results = expression.map((expr, index) => {
+                        if (!expr || typeof expr !== 'string') {
+                            throw new Error(`Expression at index ${index} is invalid: expected string, got ${typeof expr} (${JSON.stringify(expr)})`);
+                        }
+                        return evaluateExpression(expr, variables);
+                    });
+                    
+                    // Set result to output property
+                    RED.util.setMessageProperty(
+                        msg,
+                        config.outputProperty || 'payload',
+                        results,
+                        true
+                    );
+                    
+                    // Update status
+                    node.status({fill:"green", shape:"dot", text:`Evaluated ${results.length} expressions`});
+                    node.send([msg, null]);
+                    return;
+                }
+
                 // Handle batch mode
                 if (config.batchMode) {
                     // Check if we should process as batch

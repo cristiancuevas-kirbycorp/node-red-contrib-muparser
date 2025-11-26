@@ -5,3 +5,6 @@ build/
 *.obj
 *.log
 .DS_Store
+.vscode/
+.vs/
+*.tgz

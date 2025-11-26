@@ -5,6 +5,34 @@ All notable changes to node-red-contrib-muparser will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-11-26
+
+### Added
+- **Multi-Expression Mode**: New feature to evaluate multiple expressions with shared variables
+  - Enable via checkbox in node configuration
+  - Pass array of expression strings (e.g., from `msg.formulas`)
+  - All expressions use the same set of variables
+  - Returns array of results (one per expression)
+  - Perfect for coordinate transformations, unit conversions, and calculating related metrics
+  - Example: `["r*cos(theta)", "r*sin(theta)"]` with `{r:5, theta:1.047}` → `[2.5, 4.33]`
+
+### Changed
+- Enhanced documentation with multi-expression mode examples
+- Added comparison section explaining Batch Mode vs Multi-Expression Mode
+
+## [1.2.7] - 2025-11-26
+
+### Fixed
+- **Critical**: Fixed build failure on macOS (Darwin) with node-addon-api
+  - Added explicit Xcode settings to enable C++ exception support
+  - Added `GCC_ENABLE_CPP_EXCEPTIONS: YES` to xcode_settings
+  - Resolved "cannot use 'try' with exceptions disabled" compilation errors
+  - Build now works correctly on macOS (including Apple Silicon)
+
+### Changed
+- Enhanced binding.gyp with macOS-specific build configuration
+- Added MACOSX_DEPLOYMENT_TARGET for better compatibility
+
 ## [1.2.4] - 2024-11-24
 
 ### Fixed
